@@ -1,65 +1,49 @@
-import productsDB from '../db/catalog.json' assert {type: 'json'};
+let products_add = [];
 
-const productsData = [];
-productsDB.products.forEach((elem) => {
-   productsData.push(elem);
-})
-
-const productBox = document.querySelector('.product__box');
-
-productsData.forEach(productData => {
-   const productCard = document.createElement('div');
-   productCard.classList.add('product');
-
-   const productHover = document.createElement('a');
-   productHover.classList.add('product__image-hover');
-   productHover.href = '#';
-
-   const productContent = document.createElement('div');
-   productContent.classList.add('product__content');
-
-   const addCard = document.createElement('div');
-   addCard.classList.add('add-cart');
-
-   const productImage = document.createElement('img');
-   productImage.classList.add('product__img');
-   productImage.alt = productData.productImage;
-   productImage.src = './image/products/' + productData.productImage;
-
-   const shopImg = document.createElement('img');
-   shopImg.src = './image/shop.svg';
-   shopImg.alt = 'shop';
-
-   const shopText = document.createElement('p');
-   shopText.classList.add('text-add-cart');
-   shopText.textContent = 'Add to Cart';
-
-   const productTitleLink = document.createElement('a');
-   productTitleLink.classList.add('product__name');
-   productTitleLink.href = './pages/product.html';
-   productTitleLink.textContent = productData.productTitle;
-
-   const productDescription = document.createElement('p');
-   productDescription.classList.add('product__text');
-   productDescription.textContent = productData.productDescription;
-
-   const productPrice = document.createElement('p');
-   productPrice.classList.add('product__price');
-   productPrice.textContent = '$' + productData.productPrice;
-
-
-   productContent.appendChild(productTitleLink);
-   productContent.appendChild(productDescription);
-   productContent.appendChild(productPrice);
-
-
-   addCard.appendChild(shopImg);
-   addCard.appendChild(shopText);
-
-   productHover.appendChild(addCard);
-   productHover.appendChild(productImage);
-
-   productCard.appendChild(productHover);
-   productCard.appendChild(productContent);
-   productBox.appendChild(productCard);
-});
+async function fetchData() {
+   try {
+      const response = await fetch("db/catalog.json");
+      if (!response.ok) {
+         throw new Error('Не удолось получить данные с catalog JSON');
+      }
+      const data = await response.json();
+      const productBox = document.querySelector('.product__box');
+      data.products.forEach(({ productImage, productTitle, productDescription, productPrice }) => {
+         const productCart = `
+      <div class="product">
+      <a class="product__image-hover">
+         <div class="add-cart">
+            <img src="./image/shop.svg" alt="">
+            <p class="text-add-cart">Add to Cart</p>
+         </div>
+         <img class="product__img" src="./image/products/${productImage}" alt="${productImage}">
+      </a>
+      <div class="product__content">
+         <a href="./pages/product.html" class="product__name">${productTitle}</a>
+         <p class="product__text">${productDescription}</p>
+         <div class="product__price">$${productPrice}</div>
+      </div>
+   </div>`;
+         productBox.insertAdjacentHTML('beforeend', productCart);
+      })
+      const btn = document.querySelectorAll('.add-cart');
+      btn.forEach(el => {
+         el.addEventListener('click', () => {
+            const btnAddCart = el.closest('.product');
+            const product = {
+               productImage: btnAddCart.children[0].children[1].alt,
+               productPrice: btnAddCart.children[1].children[2].innerHTML.slice(1),
+               productTitle: btnAddCart.children[1].children[0].innerHTML,
+            }
+            if (products_add.length === 0) {
+               createWrap();
+            }
+            products_add.push(product);
+            add();
+         })
+      })
+   } catch (error) {
+      console.error(error);
+   }
+}
+fetchData();
